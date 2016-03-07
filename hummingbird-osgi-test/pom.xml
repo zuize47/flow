@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.vaadin</groupId>
+		<artifactId>hummingbird-project</artifactId>
+		<version>0.0.2-SNAPSHOT</version>
+	</parent>
+	<artifactId>hummingbird-osgi-test</artifactId>
+	<name>Hummingbird UI tests</name>
+	<packaging>bundle</packaging>
+
+	<properties>
+		<!-- Don't care about coding style for tests -->
+		<sonar.skip>true</sonar.skip>
+	</properties>
+
+	<dependencies>
+		<!-- Project dependencies -->
+		<dependency>
+			<groupId>com.vaadin</groupId>
+			<artifactId>hummingbird</artifactId>
+			<version>0.0.2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.vaadin</groupId>
+			<artifactId>hummingbird-client</artifactId>
+			<version>0.0.2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.vaadin</groupId>
+			<artifactId>hummingbird-test-util</artifactId>
+			<version>0.0.2-SNAPSHOT</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam</artifactId>
+			<version>4.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-spi</artifactId>
+			<version>4.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-link-assembly</artifactId>
+			<version>4.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-link-mvn</artifactId>
+			<version>4.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-junit4</artifactId>
+			<version>4.8.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-container-karaf</artifactId>
+			<version>4.8.0</version>
+		</dependency>
+<!-- 		<dependency> -->
+<!-- 		<groupId>org.ops4j.pax.exam</groupId> -->
+<!-- 		<artifactId>pax-exam-container-native</artifactId> -->
+<!-- 		<version>4.8.0</version> -->
+<!-- 		</dependency> -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.18</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.servicemix.bundles</groupId>
+			<artifactId>org.apache.servicemix.bundles.javax-inject</artifactId>
+			<version>1_2</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>6.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- <plugin> -->
+			<!-- <groupId>org.apache.maven.plugins</groupId> -->
+			<!-- <artifactId>maven-war-plugin</artifactId> -->
+			<!-- <configuration> -->
+			<!-- <failOnMissingWebXml>false</failOnMissingWebXml> -->
+			<!-- add the generated manifest to the war -->
+			<!-- <archive> -->
+			<!-- <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile> -->
+			<!-- </archive> -->
+			<!-- </configuration> -->
+			<!-- </plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Web-ContextPath>/osgitest</Web-ContextPath>
+						<!-- <Bundle-Classpath>WEB-INF/classes</Bundle-Classpath> -->
+						<!-- Must use require bundle so that META-INF/resources are deployed -->
+						<Require-Bundle>${project.groupId}.hummingbird-server;bundle-version=${project.osgi.version},${project.groupId}.hummingbird-push;bundle-version=${project.osgi.version},${project.groupId}.hummingbird-client;bundle-version=${project.osgi.version}</Require-Bundle>
+					</instructions>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.ops4j.pax.exam</groupId>
+				<artifactId>exam-maven-plugin</artifactId>
+				<version>4.8.0</version>
+				<configuration>
+					<configClass>com.vaadin.hummingbird.osgitest.ServerConfiguration</configClass>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>start-container</goal>
+							<goal>stop-container</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<profiles>
+		<profile>
+			<id>felix</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<pax.exam.framework>felix</pax.exam.framework>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.felix</groupId>
+					<artifactId>org.apache.felix.framework</artifactId>
+					<version>4.0.2</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>equinox</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<pax.exam.framework>equinox</pax.exam.framework>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>org.eclipse.osgi</artifactId>
+					<version>3.10.101.v20150820-1432</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>jbosgi</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<pax.exam.framework>jbosgi</pax.exam.framework>
+			</properties>
+			<repositories>
+				<repository>
+					<id>jboss-public</id>
+					<url>http://repository.jboss.org/nexus/content/groups/public</url>
+				</repository>
+			</repositories>
+			<dependencies>
+				<dependency>
+					<groupId>org.jboss.osgi.framework</groupId>
+					<artifactId>jbosgi-framework-aggregated</artifactId>
+					<version>1.1.0</version>
+					<scope>test</scope>
+				</dependency>
+				<dependency>
+					<groupId>org.jboss.logging</groupId>
+					<artifactId>jboss-logging</artifactId>
+					<version>3.1.0.CR2</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+
+		<profile>
+			<id>knopflerfish</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<pax.exam.framework>knopflerfish</pax.exam.framework>
+			</properties>
+			<repositories>
+				<repository>
+					<id>knopflerfish-releases</id>
+					<url>http://www.knopflerfish.org/maven2</url>
+				</repository>
+			</repositories>
+			<dependencies>
+				<dependency>
+					<groupId>org.knopflerfish</groupId>
+					<artifactId>framework</artifactId>
+					<version>5.2.0</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+
+	</profiles>
+
+</project>

@@ -16,6 +16,7 @@
 		<module>hummingbird-client</module>
 		<module>hummingbird-test-util</module>
 		<module>hummingbird-ui-test</module>
+		<module>hummingbird-osgi-test</module>
 	</modules>
 
 	<organization>
@@ -257,6 +258,11 @@
 					</instructions>
 				</configuration>
 			</plugin>
+                        <plugin>
+                    <groupId>org.apache.karaf.tooling</groupId>
+                    <artifactId>karaf-maven-plugin</artifactId>
+                    <version>4.0.4</version>
+                        </plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>
