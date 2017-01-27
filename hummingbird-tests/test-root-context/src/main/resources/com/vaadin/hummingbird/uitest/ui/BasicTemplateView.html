@@ -1,14 +1,35 @@
 <div>
 	<div class=bar>baz<input></div>
-	@include otherfile.html@
+	<other-file></other-file>
 	<div id="container"></div>
-	@child@
+	<slot></slot>
 	<button id="clearModel">Clear model value</button>
-	<button id="modelText" (click)="$server.setModelText()">Set text model value</button>
-	<button id="modelBoolean" (click)="$server.setModelBoolean()">Set text boolean value</button>
-	<div id="bindings" [title]="modelValue" [class.name]="modelValue">{{modelValue}}</div>
+	<button id="modelText" on-tap="$server.setModelText">Set text model value</button>
+	<button id="modelBoolean" on-tap="$server.setModelBoolean">Set text boolean value</button>
+	<div id="bindings" title="[[modelValue]]">[[modelValue]]</div>
 	<input id="input" type="text" value="text">
-	<button id="setAttributes" (click)="$server.setAttributes()">Set attributes for input</button>
-	<input id='attributeBinding' type='text' [attr.value]='foo'>
-	<button id="updateAttributeBinding" (click)="$server.updateAttributeBinding()">Update attribute binding</button>
+	<button id="setAttributes" on-tap="$server.setAttributes">Set attributes for input</button>
+	<input id='attributeBinding' type='text' value$='[[foo]]'>
+	<button id="updateAttributeBinding" on-tap="$server.updateAttributeBinding">Update attribute binding</button>
 </div>
+<script>
+class BasicTemplateView extends Polymer.Element {
+	static get is() { return "basic-template-view" }
+	
+	get properties() {
+		return {
+			modelValue: {
+				observer: "_modelValueChanged"
+			}
+		}
+	}
+	
+	modelValueChanged(newValue) {
+		if (newValue)
+			this.$.bindings.classList.add("name");
+		else 
+			this.$.bindings.classList.remove("name");
+	}
+}
+customElements.define(BasicTemplateView.is, BasicTemplateView);
+</script>

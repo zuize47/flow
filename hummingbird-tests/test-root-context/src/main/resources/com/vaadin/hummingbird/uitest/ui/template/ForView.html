@@ -1,15 +1,35 @@
 <div>
-	<button id="add" (click)="$server.add()">Add item</button>
-	<button id="remove" (click)="$server.remove()">Remove item</button>
-	<button id="update" (click)="$server.update()">Update item</button>
-	<div (click)="itemLog.textContent='Clicked on: '+$element.textContent"
-		class="item" *ngFor="let item of items">{{item.text}}</div>
+	<button id="add" on-tap="$server.add">Add item</button>
+	<button id="remove" on-tap="$server.remove">Remove item</button>
+	<button id="update" on-tap="$server.update">Update item</button>
+	<dom-repeat items="[[items]]">
+		<template>
+			<div on-tap="_updateLog" class="item">[[item.text]]</div>
+		</template>
+	</dom-repeat>
 	<div id="itemLog"></div>
 	<hr>
-	<div class="item-again" *ngFor="let item of items">
-		<span
-			(click)="itemAgainLog.textContent='Clicked on: '+$element.textContent">{{item.text}}</span>
-	</div>
+	<dom-repeat items="[[items]]">
+		<template>
+			<div class="item-again">
+				<span on-tap="_updateAgainLog">[[item.text]]</span>
+			</div>
+		</template>
+	</dom-repeat>
 	<div id="itemAgainLog"></div>
 	<hr>
 </div>
+<script>
+class ForViewElement extends Polymer.Element {
+	static get is() { return "for-view" }
+	
+	_updateLog(event) {
+		this.$.itemLog.textContent = "Clicked on: " + event.target.textContent;
+	}
+	
+	_updateAgainLog(event) {
+		this.$.itemLog.textContent = "Clicked on: " + event.model.text;
+	}
+}
+customElements.define(ForViewElement.is, ForViewElement);
+</script>

@@ -1,17 +1,35 @@
 <div>
 	<div>
-		First name: <span id="firstName">{{firstName}}</span> Username: <span
-			id="userName">{{firstName.toLowerCase() + "123"}}</span>
+		First name: <span id="firstName">[[firstName]]</span> Username: <span
+			id="userName">[[_formatUserName(firstName)]]</span>
 	</div>
-	<div id="itemCount" [class.hidden]="itemCount == 0">Items
-		available: {{itemCount}}</div>
+	<div id="itemCount" hidden$="[[_hasItems(itemCount)]]">Items
+		available: [[itemCount]]</div>
 
-	<div id="personAge">Age: {{person ? person.age : "Unknown"}}</div>
+	<div id="personAge">Age: [[_formatAge(person)]]</div>
 	
 	<div id="holderAge">PersonHolderAge: {{personHolder ? personHolder.person.age : "Unknown"}}</div>
 
-	<button id="updateModel" (click)="$server.updateModel()">Update
+	<button id="updateModel" on-tap="$server.updateModel">Update
 		model through template @EventHandler</button>
-	<button id="buttonUpdateModel" (click)="$element.$server.updateModel()">Update
-		model through Button @EventHandler</button>
+<!-- <button id="buttonUpdateModel" (click)="$element.$server.updateModel()">Update
+		model through Button @EventHandler</button>  -->
 </div>
+<script>
+class JsInTemplateElement extends Polymer.Element {
+	static get is() { return "js-in-template-view" }
+	
+	_formatUserName(firstName) {
+		return firstName.toLowerCase() + "123"; 
+	}
+	
+	_formatAge(person) {
+		return person ? person.age : "Unkonwn";
+	}
+	
+	_hasItems(itemCount) {
+		return itemCount == 0;
+	}
+}
+customElements.define(JsInTemplateElement.is, JsInTemplateElement);
+</script>
