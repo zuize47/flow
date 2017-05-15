@@ -129,6 +129,9 @@ public class ExecuteJavaScriptProcessor {
           object.attachExistingElementById = function(parent, tagName, serverSideId, id){
               @com.vaadin.client.ElementUtils::attachExistingElementById(*)(object.getNode(parent), tagName, serverSideId, id);
           };
+          object.checkForCustomElements = function(parent){
+            @com.vaadin.client.ElementUtils::checkForCustomElements(*)(object.getNode(parent));
+          };
           return object;
     }-*/;
 }

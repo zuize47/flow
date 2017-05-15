@@ -17,7 +17,9 @@ package com.vaadin.flow.template;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +41,8 @@ import com.vaadin.flow.template.model.TemplateModel;
 import com.vaadin.flow.template.model.TemplateModelProxyHandler;
 import com.vaadin.server.CustomElementRegistry;
 import com.vaadin.ui.Component;
+import com.vaadin.ui.ComponentEvent;
+import com.vaadin.ui.VirtualAttachEvent;
 import com.vaadin.util.ReflectTools;
 
 /**
@@ -60,6 +64,8 @@ public abstract class PolymerTemplate<M extends TemplateModel>
 
     private transient M model;
 
+    private List<Component> virtualComponents = new ArrayList<>(0);
+
     /**
      * Creates the component that is responsible for Polymer template
      * functionality.
@@ -75,6 +81,19 @@ public abstract class PolymerTemplate<M extends TemplateModel>
                 propertyName -> modelMap.setProperty(propertyName, null));
 
         mapComponents(getClass());
+        getElement().addEventListener("bind-custom-element", event -> {
+            String tag = event.getEventData().getString("tag")
+                    .toLowerCase(Locale.ENGLISH);
+            String id = event.getEventData().getString("id");
+
+            attachExistingElementById(tag, id, null);
+        }, "event.tag", "event.id");
+
+        StateNode node = getElement().getNode();
+        node.runWhenAttached(ui -> {
+            ui.getPage().executeJavaScript("this.checkForCustomElements($0);",
+                    getElement());
+        });
     }
 
     /**
@@ -248,7 +267,7 @@ public abstract class PolymerTemplate<M extends TemplateModel>
     /**
      * Attaches a child element with the given {@code tagName} and {@code id} to
      * an existing dom element on the client side with matching data.
-     * 
+     *
      * @param tagName
      *            tag name of element, not {@code null}
      * @param id
@@ -271,7 +290,13 @@ public abstract class PolymerTemplate<M extends TemplateModel>
         StateNode proposedNode = BasicElementStateProvider
                 .createStateNode(tagName);
         Element element = Element.get(proposedNode);
-        handleAttach(element, field);
+        if (field == null) {
+            CustomElementRegistry.getInstance().wrapElementIfNeeded(element);
+            virtualComponents.add(element.getComponent().get());
+            fireEvent(new VirtualAttachEvent(this));
+        } else {
+            handleAttach(element, field);
+        }
 
         StateNode node = getElement().getNode();
         node.runWhenAttached(ui -> {
@@ -314,4 +339,9 @@ public abstract class PolymerTemplate<M extends TemplateModel>
         }
     }
 
+    public Optional<Component> getVirtualComponent(Class<?> componentClass) {
+        return virtualComponents.stream().filter(
+                component -> component.getClass().equals(componentClass))
+                .findFirst();
+    }
 }

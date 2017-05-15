@@ -15,6 +15,9 @@
  */
 package com.vaadin.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.vaadin.client.flow.ExecuteJavaScriptProcessor;
 import com.vaadin.client.flow.StateNode;
 import com.vaadin.client.flow.collection.JsArray;
@@ -23,10 +26,13 @@ import com.vaadin.client.flow.collection.JsMap;
 import com.vaadin.client.flow.dom.DomApi;
 import com.vaadin.client.flow.nodefeature.NodeList;
 import com.vaadin.client.flow.nodefeature.NodeMap;
+import com.vaadin.client.flow.util.CustomElementNameValidator;
 import com.vaadin.flow.shared.NodeFeatures;
 
 import elemental.dom.Element;
 import elemental.dom.Node;
+import elemental.json.Json;
+import elemental.json.JsonObject;
 
 /**
  * Utility class which handles javascript execution context (see
@@ -181,5 +187,79 @@ public class ElementUtils {
             return fromMap;
         }
         return existingId;
+    }
+
+    private static native Element getShadowRoot(Element shadowRootParent) /*-{
+        if (shadowRootParent.shadowRoot) {
+            return shadowRootParent.shadowRoot;
+        }
+        return null;
+    }-*/;
+
+    public static void checkForCustomElements(StateNode parent) {
+        if(parent.getDomNode() == null) {
+            return;
+        }
+        Element shadowRoot = getShadowRoot((Element) parent.getDomNode());
+
+        List<Element> nodes = walkNodes((Element) shadowRoot, false);
+        List<Element> unlinkedElements = new ArrayList<>();
+
+        NodeMap map = parent.getMap(NodeFeatures.SHADOW_ROOT_DATA);
+        StateNode shadowRootNode = (StateNode) map
+                .getProperty(NodeFeatures.SHADOW_ROOT).getValue();
+
+        if (shadowRootNode == null) {
+            return;
+        }
+
+        for (Element node : nodes) {
+            String name = node.getTagName();
+            if (CustomElementNameValidator.validate(name).isValid()
+                    && !ElementUtils.elementIdBound(node, shadowRootNode)) {
+                unlinkedElements.add(node);
+            }
+        }
+
+        for (Element e : unlinkedElements) {
+            Console.log(e);
+            if (!e.hasAttribute("id")) {
+                e.setAttribute("id", guidGenerator());
+            }
+            JsonObject object = Json.createObject();
+            object.put("tag", e.getTagName());
+            object.put("id", e.getAttribute("id"));
+
+            parent.getTree().sendEventToServer(parent, "bind-custom-element",
+                    object);
+        }
+    }
+
+    private static native String guidGenerator() /*-{
+        var S4 = function() {
+            return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+        };
+        return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+    }-*/;
+
+    private static List<Element> walkNodes(Element node, boolean add) {
+        List<Element> nodes = new ArrayList<>(0);
+        if (add) {
+            nodes.add(node);
+        }
+
+        elemental.dom.NodeList childNodes = node.getChildNodes();
+        if (childNodes.length() > 0) {
+            for (int i = 0; i < childNodes.length(); i++) {
+                nodes.addAll(walkNodes((Element) childNodes.item(i), true));
+            }
+        }
+        return nodes;
+    }
+
+    private static boolean elementIdBound(Element element, StateNode parent) {
+        ExistingElementMap map = parent.getTree().getRegistry()
+                .getExistingElementMap();
+        return map.getId(element) != null;
     }
 }
